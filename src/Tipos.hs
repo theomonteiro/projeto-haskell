@@ -7,9 +7,11 @@ module Tipos
     , Resultado(..)
     , Partida(..)
     , Linha(..)
+    , participou
+    , placarPara
+    , resultadoPara
     ) where
 
-import Data.List (nub, sort)
 
 -- | Nome de um time
 type Time = String
@@ -37,3 +39,20 @@ data Linha = Linha
     , golsPro    :: Int
     , golsContra :: Int
     } deriving (Show, Eq)
+
+participou :: Time -> Partida -> Bool
+participou t p = t == mandante p || t == visitante p
+
+placarPara :: Time -> Partida -> Maybe (Int, Int)
+placarPara t p
+    | t == mandante p  = Just (golsMandante p, golsVisitante p)
+    | t == visitante p = Just (golsVisitante p, golsMandante p)
+    | otherwise        = Nothing
+
+resultadoPara :: Time -> Partida -> Maybe Resultado
+resultadoPara t = fmap (uncurry comparar) . placarPara t
+  where
+    comparar feitos sofridos = case compare feitos sofridos of
+        GT -> Vitoria
+        EQ -> Empate
+        LT -> Derrota
