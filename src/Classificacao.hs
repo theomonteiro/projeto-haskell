@@ -9,9 +9,12 @@ module Classificacao
     , saldo
     , aproveitamento
     , linhaDoTime
+    , classificacao
     ) where
 
 import Tipos
+import Data.List (sortBy)
+import Data.Ord (comparing, Down(..))
 
 -- | Pontos ganhos por resultado: 3 pela vitória, 1 pelo empate, 0 pela derrota
 pontos :: Resultado -> Int
@@ -57,3 +60,15 @@ linhaDoTime ps t = foldl acumular (Linha t 0 0 0 0 0 0) (filter (participou t) p
         }
       where
         contar x = if r == x then 1 else 0
+
+-- | Tabela completa, ordenada pelos critérios do Brasileirão:
+--   pontos > vitórias > saldo de gols > gols pró > ordem alfabética.
+--   Uma única função de comparação, combinando critérios com <> (Ordering é Monoid).
+classificacao :: [Partida] -> [Linha]
+classificacao ps = sortBy criterios (map (linhaDoTime ps) (times ps))
+  where
+    criterios = comparing (Down . pontosLinha)
+             <> comparing (Down . vitorias)
+             <> comparing (Down . saldo)
+             <> comparing (Down . golsPro)
+             <> comparing time
