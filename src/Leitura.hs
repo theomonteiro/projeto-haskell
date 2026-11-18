@@ -5,9 +5,13 @@
 module Leitura
     ( Erro(..)
     , descreverErro
+    , separar
+    , linhasNumeradas
     ) where
 
 import Tipos (Time)
+import Data.Char (isSpace)
+import Data.List (dropWhileEnd)
 
 -- | Erros possíveis na entrada. Os de linha carregam o número da linha
 --   no texto original (contando comentários e linhas em branco).
@@ -26,3 +30,20 @@ descreverErro (NumeroInvalido n campo)   = "Linha " ++ show n ++ ": \"" ++ campo
 descreverErro (PlacarNegativo n)         = "Linha " ++ show n ++ ": placar negativo"
 descreverErro (MesmoTime n)              = "Linha " ++ show n ++ ": um time nao pode jogar contra si mesmo"
 descreverErro (TimeRepetidoNaRodada r t) = "Rodada " ++ show r ++ ": " ++ t ++ " joga mais de uma vez"
+
+-- | Quebra uma linha nos separadores. Mantém campos vazios: separar ';' "a;;b" == ["a","","b"]
+separar :: Char -> String -> [String]
+separar c s = case break (== c) s of
+    (campo, [])       -> [campo]
+    (campo, _ : resto) -> campo : separar c resto
+
+-- | Remove espaços (e o \r de arquivos do Windows) do começo e do fim
+aparar :: String -> String
+aparar = dropWhileEnd isSpace . dropWhile isSpace
+
+-- | Linhas que devem ser lidas, com o número que têm no texto original.
+--   Linhas em branco e linhas que começam com # são ignoradas.
+linhasNumeradas :: String -> [(Int, String)]
+linhasNumeradas = filter (deveLer . snd) . zip [1 ..] . map aparar . lines
+  where
+    deveLer l = not (null l) && take 1 l /= "#"
