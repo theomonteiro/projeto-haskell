@@ -10,6 +10,7 @@ module Classificacao
     , aproveitamento
     , linhaDoTime
     , classificacao
+    , ateRodada
     ) where
 
 import Tipos
@@ -72,3 +73,7 @@ classificacao ps = sortBy criterios (map (linhaDoTime ps) (times ps))
              <> comparing (Down . saldo)
              <> comparing (Down . golsPro)
              <> comparing time
+
+-- | Só as partidas até a rodada informada
+ateRodada :: Int -> [Partida] -> [Partida]
+ateRodada r = filter ((<= r) . rodada)
