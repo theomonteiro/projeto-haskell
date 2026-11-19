@@ -8,12 +8,17 @@ module Leitura
     , separar
     , linhasNumeradas
     , lerPartida
+    , lerCampeonato
+    , timesRepetidos
+    , todosOsErros
     ) where
 
 import Tipos (Time, Partida(..))
 import Data.Char (isSpace)
-import Data.List (dropWhileEnd)
+import Data.List (dropWhileEnd, nub)
 import Text.Read (readMaybe)
+import Data.Either (lefts, rights)
+import Data.Maybe (listToMaybe)
 
 -- | Erros possíveis na entrada. Os de linha carregam o número da linha
 --   no texto original (contando comentários e linhas em branco).
@@ -76,3 +81,23 @@ lerPartida n linha = do
     exigir (gm >= 0 && gv >= 0) (PlacarNegativo n)
     exigir (mand /= vis) (MesmoTime n)
     return (Partida r mand gm gv vis)
+
+-- | Um erro para cada time que aparece mais de uma vez na mesma rodada
+timesRepetidos :: [Partida] -> [Erro]
+timesRepetidos ps = map (uncurry TimeRepetidoNaRodada) (nub (filter repetido escalacoes))
+  where
+    escalacoes = concatMap (\p -> [(rodada p, mandante p), (rodada p, visitante p)]) ps
+    repetido e = length (filter (== e) escalacoes) > 1
+
+-- | Lê o texto inteiro, parando no primeiro erro (traverse), e depois
+--   verifica que nenhum time joga duas vezes na mesma rodada.
+lerCampeonato :: String -> Either Erro [Partida]
+lerCampeonato texto = do
+    partidas <- traverse (uncurry lerPartida) (linhasNumeradas texto)
+    maybe (Right partidas) Left (listToMaybe (timesRepetidos partidas))
+
+-- | Relatório com todos os erros do texto, e não só o primeiro
+todosOsErros :: String -> [Erro]
+todosOsErros texto = lefts resultados ++ timesRepetidos (rights resultados)
+  where
+    resultados = map (uncurry lerPartida) (linhasNumeradas texto)
