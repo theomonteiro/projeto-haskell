@@ -11,6 +11,9 @@ module Classificacao
     , linhaDoTime
     , classificacao
     , ateRodada
+    , diferencaGols
+    , maiorGoleada
+    , mediaGols
     ) where
 
 import Tipos
@@ -77,3 +80,24 @@ classificacao ps = sortBy criterios (map (linhaDoTime ps) (times ps))
 -- | Só as partidas até a rodada informada
 ateRodada :: Int -> [Partida] -> [Partida]
 ateRodada r = filter ((<= r) . rodada)
+
+-- | Diferença absoluta de gols de uma partida
+diferencaGols :: Partida -> Int
+diferencaGols p = abs (golsMandante p - golsVisitante p)
+
+-- | Partida com a maior diferença de gols; Nothing para lista vazia.
+--   Em caso de empate na diferença, fica a primeira da lista.
+maiorGoleada :: [Partida] -> Maybe Partida
+maiorGoleada = foldr escolher Nothing
+  where
+    escolher p Nothing = Just p
+    escolher p (Just m)
+        | diferencaGols p >= diferencaGols m = Just p
+        | otherwise                          = Just m
+
+-- | Média de gols por partida; Nothing para lista vazia
+mediaGols :: [Partida] -> Maybe Double
+mediaGols [] = Nothing
+mediaGols ps = Just (fromIntegral totalGols / fromIntegral (length ps))
+  where
+    totalGols = foldr (\p acc -> golsMandante p + golsVisitante p + acc) 0 ps :: Int
