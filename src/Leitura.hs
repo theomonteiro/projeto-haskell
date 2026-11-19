@@ -11,11 +11,13 @@ module Leitura
     , lerCampeonato
     , timesRepetidos
     , todosOsErros
+    , tabelaFormatada
     ) where
 
-import Tipos (Time, Partida(..))
+import Tipos (Time, Partida(..), Linha(..))
+import Classificacao (pontosLinha, saldo, aproveitamento)
 import Data.Char (isSpace)
-import Data.List (dropWhileEnd, nub)
+import Data.List (dropWhileEnd, intercalate, nub, transpose)
 import Text.Read (readMaybe)
 import Data.Either (lefts, rights)
 import Data.Maybe (listToMaybe)
@@ -101,3 +103,22 @@ todosOsErros :: String -> [Erro]
 todosOsErros texto = lefts resultados ++ timesRepetidos (rights resultados)
   where
     resultados = map (uncurry lerPartida) (linhasNumeradas texto)
+
+-- | Tabela pronta para impressão. As colunas se ajustam ao maior valor,
+--   então nada é cortado (nomes longos, saldo -10 etc.).
+tabelaFormatada :: [Linha] -> String
+tabelaFormatada ls = unlines (formatar cabecalho : separador : map formatar corpo)
+  where
+    cabecalho = ["Pos", "Time", "Pts", "J", "V", "E", "D", "GP", "GC", "SG", "Aprov"]
+    corpo     = zipWith celulas [1 :: Int ..] ls
+    celulas i l =
+        [ show i, time l, show (pontosLinha l), show (jogos l), show (vitorias l)
+        , show (empates l), show (derrotas l), show (golsPro l), show (golsContra l)
+        , show (saldo l), show (round (aproveitamento l) :: Int) ++ "%" ]
+
+    larguras  = map (foldr (max . length) 0) (transpose (cabecalho : corpo))
+    formatar  = intercalate " | " . zipWith3 alinhar [0 :: Int ..] larguras
+    alinhar coluna n s
+        | coluna == 1 = s ++ replicate (n - length s) ' '   -- nome do time à esquerda
+        | otherwise   = replicate (n - length s) ' ' ++ s   -- números à direita
+    separador = replicate (sum larguras + 3 * (length larguras - 1)) '-'
