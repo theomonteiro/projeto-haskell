@@ -3,8 +3,8 @@ module Main (main) where
 
 import Tipos
 import Classificacao
-import Leitura (lerCampeonato)
-import Dados (dadosCampeonato)
+import Leitura
+import Dados (dadosCampeonato, dadosComErros)
 import Data.Either (fromRight)
 
 testar :: (Eq a, Show a) => String -> a -> a -> IO ()
@@ -138,7 +138,80 @@ camada2 = do
         (classificacao [])
         []
 
+camada3 :: IO ()
+camada3 = do
+    testar "separar preserva campos vazios"
+        (separar ';' "a;;b")
+        ["a", "", "b"]
+
+    testar "entrada valida devolve Right com 15 partidas"
+        (fmap length (lerCampeonato dadosCampeonato))
+        (Right 15)
+
+    testar "entrada vazia"
+        (lerCampeonato "")
+        (Right [])
+
+    testar "lerPartida valida"
+        (lerPartida 1 "1;Coritiba;2;1;Athletico")
+        (Right exemplo)
+
+    testar "CamposInvalidos"
+        (lerPartida 7 "1;Coritiba;2;1")
+        (Left (CamposInvalidos 7))
+
+    testar "CamposInvalidos com nome vazio"
+        (lerPartida 7 "1;;2;1;Athletico")
+        (Left (CamposInvalidos 7))
+
+    testar "NumeroInvalido"
+        (lerPartida 7 "1;Coritiba;dois;1;Athletico")
+        (Left (NumeroInvalido 7 "dois"))
+
+    testar "PlacarNegativo"
+        (lerPartida 7 "1;Coritiba;-1;0;Athletico")
+        (Left (PlacarNegativo 7))
+
+    testar "MesmoTime"
+        (lerPartida 7 "1;Coritiba;1;1;Coritiba")
+        (Left (MesmoTime 7))
+
+    testar "TimeRepetidoNaRodada"
+        (lerCampeonato
+            "1;Coritiba;1;0;Athletico\n1;Parana;0;2;Coritiba")
+        (Left (TimeRepetidoNaRodada 1 "Coritiba"))
+
+    testar "numeracao considera comentarios e linhas em branco"
+        (lerCampeonato "# cabecalho\n\n1;A;x;0;B")
+        (Left (NumeroInvalido 3 "x"))
+
+    testar "lerCampeonato devolve o primeiro erro"
+        (lerCampeonato dadosComErros)
+        (Left (NumeroInvalido 2 "dois"))
+
+    testar "todosOsErros lista os cinco erros da demonstracao"
+        (todosOsErros dadosComErros)
+        [ NumeroInvalido 2 "dois"
+        , MesmoTime 3
+        , PlacarNegativo 4
+        , CamposInvalidos 5
+        , TimeRepetidoNaRodada 2 "Coritiba"
+        ]
+
+    testar "todosOsErros de entrada valida"
+        (todosOsErros dadosCampeonato)
+        []
+
+    testar "tabelaFormatada tem cabecalho, separador e 6 times"
+        (length (lines (tabelaFormatada (classificacao partidas))))
+        8
+
+    testar "tabelaFormatada vazia tem cabecalho e separador"
+        (length (lines (tabelaFormatada [])))
+        2
+
 main :: IO ()
 main = do
     camada1
     camada2
+    camada3
