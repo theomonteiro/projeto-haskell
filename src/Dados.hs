@@ -4,8 +4,9 @@
 -- =============================================================
 module Dados
     ( dadosCampeonato
+    , dadosComErros
     ) where
-
+    
 -- | Campeonato paranaense fictício: 6 times, 5 rodadas, turno único (15 jogos).
 --   Cobre: empate em 0 x 0 (rodada 1), vitórias por 3 gols (rodadas 2 e 3) e
 --   Londrina e Operario empatados em pontos e vitórias, decididos pelo saldo.
