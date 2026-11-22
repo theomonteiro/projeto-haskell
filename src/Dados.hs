@@ -6,7 +6,7 @@ module Dados
     ( dadosCampeonato
     , dadosComErros
     ) where
-    
+
 -- | Campeonato paranaense fictício: 6 times, 5 rodadas, turno único (15 jogos).
 --   Cobre: empate em 0 x 0 (rodada 1), vitórias por 3 gols (rodadas 2 e 3) e
 --   Londrina e Operario empatados em pontos e vitórias, decididos pelo saldo.
@@ -38,4 +38,16 @@ dadosCampeonato = unlines
     , "5;Operario;1;1;Athletico"
     , "5;Parana;0;2;Coritiba"
     , "5;Londrina;2;0;Maringa"
+    ]
+
+-- | Entrada com um erro de cada tipo, para demonstrar a validacao.
+dadosComErros :: String
+dadosComErros = unlines
+    [ "# entrada com erros de digitacao"
+    , "1;Coritiba;dois;1;Athletico"
+    , "1;Parana;1;1;Parana"
+    , "1;Londrina;-1;0;Operario"
+    , "2;Maringa;0;0;Athletico;Extra"
+    , "2;Coritiba;2;0;Londrina"
+    , "2;Coritiba;1;0;Operario"
     ]
